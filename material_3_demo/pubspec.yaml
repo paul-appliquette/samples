@@ -14,8 +14,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.2
-  url_launcher: ^6.1.8
+  cupertino_icons: ^1.0.5
+  url_launcher: ^6.1.11
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   analysis_defaults:

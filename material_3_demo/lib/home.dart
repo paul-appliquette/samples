@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import 'color_palettes_screen.dart';
 import 'component_screen.dart';
@@ -15,10 +16,12 @@ class Home extends StatefulWidget {
     super.key,
     required this.useLightMode,
     required this.useMaterial3,
-    required this.colorSelected,
+    required this.presetColorSelected,
+    required this.customColorSelected,
     required this.handleBrightnessChange,
     required this.handleMaterialVersionChange,
-    required this.handleColorSelect,
+    required this.handlePresetColorSelect,
+    required this.handleCustomColorSelect,
     required this.handleImageSelect,
     required this.colorSelectionMethod,
     required this.imageSelected,
@@ -26,13 +29,15 @@ class Home extends StatefulWidget {
 
   final bool useLightMode;
   final bool useMaterial3;
-  final ColorSeed colorSelected;
+  final ColorSeed presetColorSelected;
+  final Color customColorSelected;
   final ColorImageProvider imageSelected;
   final ColorSelectionMethod colorSelectionMethod;
 
   final void Function(bool useLightMode) handleBrightnessChange;
   final void Function() handleMaterialVersionChange;
-  final void Function(int value) handleColorSelect;
+  final void Function(int value) handlePresetColorSelect;
+  final void Function(Color value) handleCustomColorSelect;
   final void Function(int value) handleImageSelect;
 
   @override
@@ -145,9 +150,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               _Material3Button(
                 handleMaterialVersionChange: widget.handleMaterialVersionChange,
               ),
-              _ColorSeedButton(
-                handleColorSelect: widget.handleColorSelect,
-                colorSelected: widget.colorSelected,
+              _PresetColorSeedButton(
+                handlePresetColorSelect: widget.handlePresetColorSelect,
+                presetColorSelected: widget.presetColorSelected,
+                colorSelectionMethod: widget.colorSelectionMethod,
+              ),
+              _CustomColorSeedButton(
+                handleCustomColorSelect: widget.handleCustomColorSelect,
+                customColorSelected: widget.customColorSelected,
                 colorSelectionMethod: widget.colorSelectionMethod,
               ),
               _ColorImageButton(
@@ -176,9 +186,16 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             ),
           ),
           Flexible(
-            child: _ColorSeedButton(
-              handleColorSelect: widget.handleColorSelect,
-              colorSelected: widget.colorSelected,
+            child: _PresetColorSeedButton(
+              handlePresetColorSelect: widget.handlePresetColorSelect,
+              presetColorSelected: widget.presetColorSelected,
+              colorSelectionMethod: widget.colorSelectionMethod,
+            ),
+          ),
+          Flexible(
+            child: _CustomColorSeedButton(
+              handleCustomColorSelect: widget.handleCustomColorSelect,
+              customColorSelected: widget.customColorSelected,
               colorSelectionMethod: widget.colorSelectionMethod,
             ),
           ),
@@ -224,11 +241,13 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                         useMaterial3: widget.useMaterial3,
                         handleMaterialVersionChange:
                             widget.handleMaterialVersionChange,
+                        handlePresetColorSelect: widget.handlePresetColorSelect,
+                        handleCustomColorSelect: widget.handleCustomColorSelect,
                         handleImageSelect: widget.handleImageSelect,
-                        handleColorSelect: widget.handleColorSelect,
                         colorSelectionMethod: widget.colorSelectionMethod,
+                        presetColorSelected: widget.presetColorSelected,
+                        customColorSelected: widget.customColorSelected,
                         imageSelected: widget.imageSelected,
-                        colorSelected: widget.colorSelected,
                       )
                     : _trailingActions(),
               ),
@@ -300,15 +319,15 @@ class _Material3Button extends StatelessWidget {
   }
 }
 
-class _ColorSeedButton extends StatelessWidget {
-  const _ColorSeedButton({
-    required this.handleColorSelect,
-    required this.colorSelected,
+class _PresetColorSeedButton extends StatelessWidget {
+  const _PresetColorSeedButton({
+    required this.handlePresetColorSelect,
+    required this.presetColorSelected,
     required this.colorSelectionMethod,
   });
 
-  final void Function(int) handleColorSelect;
-  final ColorSeed colorSelected;
+  final void Function(int) handlePresetColorSelect;
+  final ColorSeed presetColorSelected;
   final ColorSelectionMethod colorSelectionMethod;
 
   @override
@@ -318,7 +337,7 @@ class _ColorSeedButton extends StatelessWidget {
         Icons.palette_outlined,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
-      tooltip: 'Select a seed color',
+      tooltip: 'Select a preset seed color',
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       itemBuilder: (context) {
         return List.generate(ColorSeed.values.length, (index) {
@@ -326,14 +345,14 @@ class _ColorSeedButton extends StatelessWidget {
 
           return PopupMenuItem(
             value: index,
-            enabled: currentColor != colorSelected ||
-                colorSelectionMethod != ColorSelectionMethod.colorSeed,
+            enabled: currentColor != presetColorSelected ||
+                colorSelectionMethod != ColorSelectionMethod.presetColorSeed,
             child: Wrap(
               children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 10),
                   child: Icon(
-                    currentColor == colorSelected &&
+                    currentColor == presetColorSelected &&
                             colorSelectionMethod != ColorSelectionMethod.image
                         ? Icons.color_lens
                         : Icons.color_lens_outlined,
@@ -349,7 +368,62 @@ class _ColorSeedButton extends StatelessWidget {
           );
         });
       },
-      onSelected: handleColorSelect,
+      onSelected: handlePresetColorSelect,
+    );
+  }
+}
+
+class _CustomColorSeedButton extends StatelessWidget {
+  const _CustomColorSeedButton({
+    required this.handleCustomColorSelect,
+    required this.customColorSelected,
+    required this.colorSelectionMethod,
+  });
+
+  final void Function(Color) handleCustomColorSelect;
+  final Color customColorSelected;
+  final ColorSelectionMethod colorSelectionMethod;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton(
+      icon: Icon(
+        Icons.colorize_outlined,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      tooltip: 'Define a custom seed color',
+      itemBuilder: (context) {
+        return [
+          PopupMenuItem(
+            value: customColorSelected,
+            child: _ColorPickerButton(
+              currentColor: customColorSelected,
+              onColorPicked: (color) {
+                Navigator.pop(context);
+                handleCustomColorSelect(color);
+              },
+              child: Wrap(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Icon(
+                      colorSelectionMethod ==
+                              ColorSelectionMethod.customColorSeed
+                          ? Icons.circle
+                          : Icons.radio_button_unchecked,
+                      color: customColorSelected,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 20),
+                    child: Text('Custom Seed'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ];
+      },
     );
   }
 }
@@ -422,23 +496,27 @@ class _ExpandedTrailingActions extends StatelessWidget {
     required this.handleBrightnessChange,
     required this.useMaterial3,
     required this.handleMaterialVersionChange,
-    required this.handleColorSelect,
+    required this.handlePresetColorSelect,
+    required this.handleCustomColorSelect,
     required this.handleImageSelect,
+    required this.presetColorSelected,
+    required this.customColorSelected,
     required this.imageSelected,
-    required this.colorSelected,
     required this.colorSelectionMethod,
   });
 
   final void Function(bool) handleBrightnessChange;
   final void Function() handleMaterialVersionChange;
+  final void Function(int) handlePresetColorSelect;
+  final void Function(Color) handleCustomColorSelect;
   final void Function(int) handleImageSelect;
-  final void Function(int) handleColorSelect;
 
   final bool useLightMode;
   final bool useMaterial3;
 
   final ColorImageProvider imageSelected;
-  final ColorSeed colorSelected;
+  final ColorSeed presetColorSelected;
+  final Color customColorSelected;
   final ColorSelectionMethod colorSelectionMethod;
 
   @override
@@ -476,9 +554,15 @@ class _ExpandedTrailingActions extends StatelessWidget {
             ],
           ),
           const Divider(),
-          _ExpandedColorSeedAction(
-            handleColorSelect: handleColorSelect,
-            colorSelected: colorSelected,
+          _ExpandedPresetColorSeedAction(
+            handleColorSelect: handlePresetColorSelect,
+            colorSelected: presetColorSelected,
+            colorSelectionMethod: colorSelectionMethod,
+          ),
+          const Divider(),
+          _ExpandedCustomColorSeedAction(
+            handleCustomColorSelect: handleCustomColorSelect,
+            customColorSelected: customColorSelected,
             colorSelectionMethod: colorSelectionMethod,
           ),
           const Divider(),
@@ -496,8 +580,8 @@ class _ExpandedTrailingActions extends StatelessWidget {
   }
 }
 
-class _ExpandedColorSeedAction extends StatelessWidget {
-  const _ExpandedColorSeedAction({
+class _ExpandedPresetColorSeedAction extends StatelessWidget {
+  const _ExpandedPresetColorSeedAction({
     required this.handleColorSelect,
     required this.colorSelected,
     required this.colorSelectionMethod,
@@ -519,12 +603,51 @@ class _ExpandedColorSeedAction extends StatelessWidget {
             icon: const Icon(Icons.radio_button_unchecked),
             color: ColorSeed.values[i].color,
             isSelected: colorSelected.color == ColorSeed.values[i].color &&
-                colorSelectionMethod == ColorSelectionMethod.colorSeed,
+                colorSelectionMethod == ColorSelectionMethod.presetColorSeed,
             selectedIcon: const Icon(Icons.circle),
             onPressed: () {
               handleColorSelect(i);
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExpandedCustomColorSeedAction extends StatelessWidget {
+  const _ExpandedCustomColorSeedAction({
+    required this.handleCustomColorSelect,
+    required this.customColorSelected,
+    required this.colorSelectionMethod,
+  });
+
+  final void Function(Color) handleCustomColorSelect;
+  final Color customColorSelected;
+  final ColorSelectionMethod colorSelectionMethod;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ColorPickerButton(
+      currentColor: customColorSelected,
+      onColorPicked: handleCustomColorSelect,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.colorize_outlined,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8.0),
+            Icon(
+              colorSelectionMethod == ColorSelectionMethod.customColorSeed
+                  ? Icons.circle
+                  : Icons.radio_button_unchecked,
+              color: customColorSelected,
+            ),
+          ],
         ),
       ),
     );
@@ -582,16 +705,85 @@ class _ExpandedImageColorAction extends StatelessWidget {
   }
 }
 
+class _ColorPickerButton extends StatefulWidget {
+  const _ColorPickerButton({
+    required this.currentColor,
+    required this.onColorPicked,
+    required this.child,
+  });
+
+  final Color currentColor;
+  final void Function(Color) onColorPicked;
+  final Widget child;
+
+  @override
+  State<_ColorPickerButton> createState() => _ColorPickerButtonState();
+}
+
+class _ColorPickerButtonState extends State<_ColorPickerButton> {
+  late Color _pickerColor;
+
+  @override
+  void initState() {
+    super.initState();
+    _pickerColor = widget.currentColor;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        final pickedColor = await showDialog<Color>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Define a custom color'),
+              content: SingleChildScrollView(
+                child: ColorPicker(
+                  pickerColor: _pickerColor,
+                  onColorChanged: _changeColor,
+                  hexInputBar: true,
+                  labelTypes: ColorLabelType.values,
+                ),
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(_pickerColor);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+        if (pickedColor != null && pickedColor != widget.currentColor) {
+          widget.onColorPicked(pickedColor);
+        }
+      },
+      child: Tooltip(
+        message: 'Define a custom seed color',
+        child: widget.child,
+      ),
+    );
+  }
+
+  void _changeColor(Color color) {
+    setState(() => _pickerColor = color);
+  }
+}
+
 class NavigationTransition extends StatefulWidget {
-  const NavigationTransition(
-      {super.key,
-      required this.scaffoldKey,
-      required this.animationController,
-      required this.railAnimation,
-      required this.navigationRail,
-      required this.navigationBar,
-      required this.appBar,
-      required this.body});
+  const NavigationTransition({
+    super.key,
+    required this.scaffoldKey,
+    required this.animationController,
+    required this.railAnimation,
+    required this.navigationRail,
+    required this.navigationBar,
+    required this.appBar,
+    required this.body,
+  });
 
   final GlobalKey<ScaffoldState> scaffoldKey;
   final AnimationController animationController;
@@ -761,11 +953,12 @@ class _RailTransition extends State<RailTransition> {
 }
 
 class BarTransition extends StatefulWidget {
-  const BarTransition(
-      {super.key,
-      required this.animation,
-      required this.backgroundColor,
-      required this.child});
+  const BarTransition({
+    super.key,
+    required this.animation,
+    required this.backgroundColor,
+    required this.child,
+  });
 
   final Animation<double> animation;
   final Color backgroundColor;

@@ -23,10 +23,12 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   bool useMaterial3 = true;
   ThemeMode themeMode = ThemeMode.system;
-  ColorSeed colorSelected = ColorSeed.baseColor;
+  ColorSeed presetColorSelected = ColorSeed.baseColor;
+  Color customColorSelected = ColorSeed.baseColor.color;
   ColorImageProvider imageSelected = ColorImageProvider.leaves;
   ColorScheme? imageColorScheme = const ColorScheme.light();
-  ColorSelectionMethod colorSelectionMethod = ColorSelectionMethod.colorSeed;
+  ColorSelectionMethod colorSelectionMethod =
+      ColorSelectionMethod.presetColorSeed;
 
   bool get useLightMode {
     switch (themeMode) {
@@ -52,10 +54,17 @@ class _AppState extends State<App> {
     });
   }
 
-  void handleColorSelect(int value) {
+  void handlePresetColorSelect(int value) {
     setState(() {
-      colorSelectionMethod = ColorSelectionMethod.colorSeed;
-      colorSelected = ColorSeed.values[value];
+      colorSelectionMethod = ColorSelectionMethod.presetColorSeed;
+      presetColorSelected = ColorSeed.values[value];
+    });
+  }
+
+  void handleCustomColorSelect(Color value) {
+    setState(() {
+      colorSelectionMethod = ColorSelectionMethod.customColorSeed;
+      customColorSelected = value;
     });
   }
 
@@ -78,8 +87,11 @@ class _AppState extends State<App> {
       title: 'Material 3',
       themeMode: themeMode,
       theme: ThemeData(
-        colorSchemeSeed: colorSelectionMethod == ColorSelectionMethod.colorSeed
-            ? colorSelected.color
+        colorSchemeSeed:
+        colorSelectionMethod == ColorSelectionMethod.presetColorSeed
+            ? presetColorSelected.color
+            : colorSelectionMethod == ColorSelectionMethod.customColorSeed
+            ? customColorSelected
             : null,
         colorScheme: colorSelectionMethod == ColorSelectionMethod.image
             ? imageColorScheme
@@ -88,8 +100,11 @@ class _AppState extends State<App> {
         brightness: Brightness.light,
       ),
       darkTheme: ThemeData(
-        colorSchemeSeed: colorSelectionMethod == ColorSelectionMethod.colorSeed
-            ? colorSelected.color
+        colorSchemeSeed:
+        colorSelectionMethod == ColorSelectionMethod.presetColorSeed
+            ? presetColorSelected.color
+            : colorSelectionMethod == ColorSelectionMethod.customColorSeed
+            ? customColorSelected
             : imageColorScheme!.primary,
         useMaterial3: useMaterial3,
         brightness: Brightness.dark,
@@ -97,11 +112,13 @@ class _AppState extends State<App> {
       home: Home(
         useLightMode: useLightMode,
         useMaterial3: useMaterial3,
-        colorSelected: colorSelected,
+        presetColorSelected: presetColorSelected,
+        customColorSelected: customColorSelected,
         imageSelected: imageSelected,
         handleBrightnessChange: handleBrightnessChange,
         handleMaterialVersionChange: handleMaterialVersionChange,
-        handleColorSelect: handleColorSelect,
+        handlePresetColorSelect: handlePresetColorSelect,
+        handleCustomColorSelect: handleCustomColorSelect,
         handleImageSelect: handleImageSelect,
         colorSelectionMethod: colorSelectionMethod,
       ),

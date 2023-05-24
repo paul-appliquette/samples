@@ -16,7 +16,8 @@ const double transitionLength = 500;
 // Whether the user has chosen a theme color via a direct [ColorSeed] selection,
 // or an image [ColorImageProvider].
 enum ColorSelectionMethod {
-  colorSeed,
+  presetColorSeed,
+  customColorSeed,
   image,
 }
 
